@@ -79,6 +79,9 @@ class MetadataCache:
 
 
 class TouchedDirectories:
+    """Keeps track of directories whose content has been modified and corrects their modification time to match the
+    modification time in the source directory"""
+
     def __init__(self, source: str, replica: str):
         self._source = source
         self._replica = replica
@@ -353,8 +356,8 @@ def compare_files(source_file_path: str, replica_file_path: str, cache: Metadata
     if not first_encounter:
         if not source_metadata.update_mtime() and source_metadata.mtime == replica_metadata.mtime:
             # when the file has been encountered in previous sync pass and there have been no modifications, updating
-            logging.debug(f'Skipping "{replica_file_path}", no change')
             # is not necessary
+            logging.debug(f'Skipping "{replica_file_path}", no change')
             return
 
     if source_metadata.size == replica_metadata.size and source_metadata.md5() == replica_metadata.md5():
