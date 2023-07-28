@@ -126,8 +126,20 @@ def main():
     metadata_cache = MetadataCache()
 
     while True:
+        sync_start = time.monotonic()
         perform_sync(source, replica, metadata_cache)
         metadata_cache.prune()
+        sync_length = time.monotonic() - sync_start
+        sleep_length = interval - sync_length
+
+        skips = 0
+        while sleep_length < 0:
+            sleep_length += interval
+            skips += 1
+
+        if skips:
+            logging.warning(f'{skips} sync passes have been skipped due to sync taking too long')
+
         time.sleep(interval)
 
 
