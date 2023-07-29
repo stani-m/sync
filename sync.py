@@ -36,12 +36,12 @@ class PathMetadata:
             return True
         return False
 
-    def md5(self) -> bytes:
-        md5_hash = hashlib.md5()
+    def sha256(self) -> bytes:
+        sha256_hash = hashlib.sha256()
         with open(self._path, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b''):
-                md5_hash.update(chunk)
-        return md5_hash.digest()
+            for chunk in iter(lambda: f.read(65536), b''):
+                sha256_hash.update(chunk)
+        return sha256_hash.digest()
 
     @property
     def accessed(self) -> bool:
@@ -179,7 +179,7 @@ def setup_logging(log_file: str, log_level):
             log_file_ok = False
         else:
             log_handlers.append(logging.FileHandler(log_file))
-    logging.basicConfig(level=log_level, format='[%(levelname)s]:%(asctime)s:%(message)s', handlers=log_handlers)
+    logging.basicConfig(level=log_level, format='[%(levelname)s]:%(asctime)s:%(message)s: ', handlers=log_handlers)
     if not log_file_ok:
         logging.warning(f'Log file "{log_file}" cannot be written to')
 
@@ -372,7 +372,7 @@ def compare_files(source_file_path: str, replica_file_path: str, cache: Metadata
             logging.debug(f'Skipping "{replica_file_path}", no change')
             return
 
-    if source_metadata.size == replica_metadata.size and source_metadata.md5() == replica_metadata.md5():
+    if source_metadata.size == replica_metadata.size and source_metadata.sha256() == replica_metadata.sha256():
         # file contents are the same, updating is not necessary
         logging.debug(f'Skipping "{replica_file_path}", contents identical')
         if not first_encounter:
