@@ -126,11 +126,15 @@ def main():
     metadata_cache = MetadataCache()
 
     while True:
+        logging.info('Beginning synchronization pass')
+
         sync_start = time.monotonic()
         perform_sync(source, replica, metadata_cache)
         metadata_cache.prune()
         sync_length = time.monotonic() - sync_start
         sleep_length = interval - sync_length
+
+        logging.info(f'Synchronization pass complete in {sync_length:.2f}s')
 
         skips = 0
         while sleep_length < 0:
@@ -179,7 +183,7 @@ def setup_logging(log_file: str, log_level):
             log_file_ok = False
         else:
             log_handlers.append(logging.FileHandler(log_file))
-    logging.basicConfig(level=log_level, format='[%(levelname)s]:%(asctime)s:%(message)s: ', handlers=log_handlers)
+    logging.basicConfig(level=log_level, format='[%(levelname)s]:%(asctime)s: %(message)s', handlers=log_handlers)
     if not log_file_ok:
         logging.warning(f'Log file "{log_file}" cannot be written to')
 
@@ -207,8 +211,6 @@ def initial_checks(replica: str, source: str, log_file: str):
 
 
 def perform_sync(source: str, replica: str, cache: MetadataCache):
-    logging.info('Beginning synchronization pass')
-
     touched_dirs = TouchedDirectories(source, replica)
 
     for (s_path, s_dirs, s_files), (r_path, r_dirs, r_files) in zip(os.walk(source), os.walk(replica)):
@@ -222,8 +224,6 @@ def perform_sync(source: str, replica: str, cache: MetadataCache):
         handle_files(s_path, s_files, r_path, r_files, cache, touched_dirs)
 
     touched_dirs.fix_metadata()
-
-    logging.info('Synchronization pass complete')
 
 
 def handle_directories(s_path: str, s_dirs: [str], r_path: str, r_dirs: [str], cache: MetadataCache):
